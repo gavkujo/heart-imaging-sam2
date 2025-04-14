@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Change path
-SOURCE_DIR="/Users/marcia/Desktop/datasets/ACDC/training"
-GT_DEST="/Users/marcia/acdc_data/gt"
-IMG_DEST="/Users/marcia/acdc_data/img"
+SOURCE_DIR="../ACDC/training"
+GT_DEST="../acdc_data/gt"
+IMG_DEST="../acdc_data/img"
 
 mkdir -p "$GT_DEST"
 mkdir -p "$IMG_DEST"

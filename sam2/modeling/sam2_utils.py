@@ -16,6 +16,70 @@ import torch.nn.functional as F
 from sam2.utils.misc import mask_to_box
 
 
+from scipy import ndimage
+
+def compute_grad_diff_metric(img1: torch.Tensor, img2: torch.Tensor) -> float:
+    """
+    Compute mean absolute difference of Sobel gradient magnitudes between two frames.
+    
+    Args:
+        img1, img2: torch.Tensor of shape (C,H,W) or (H,W), values in [0,255].
+                    If 3‑channel, it averages to grayscale first.
+    
+    Returns:
+        float: mean(|G2 - G1|) where Gx, Gy are Sobel gradients.
+    """
+    # move to CPU numpy
+    arr1 = img1.detach().cpu().numpy()
+    arr2 = img2.detach().cpu().numpy()
+    
+    # if RGB, convert to grayscale by averaging channels
+    if arr1.ndim == 3:
+        arr1 = arr1.mean(axis=0)
+        arr2 = arr2.mean(axis=0)
+    
+    # Sobel gradients
+    gx1 = ndimage.sobel(arr1, axis=1)  # horizontal
+    gy1 = ndimage.sobel(arr1, axis=0)  # vertical
+    gx2 = ndimage.sobel(arr2, axis=1)
+    gy2 = ndimage.sobel(arr2, axis=0)
+    
+    # gradient magnitudes
+    mag1 = np.hypot(gx1, gy1)
+    mag2 = np.hypot(gx2, gy2)
+    
+    # mean absolute difference
+    diff = np.abs(mag2 - mag1)
+    return diff.mean()
+
+
+def is_significant(
+    new_frame: torch.Tensor,
+    memory_frames: list[torch.Tensor],
+    tau_grad: float = 10.0
+) -> bool:
+    """
+    Decide if `new_frame` is sufficiently different from *all* `memory_frames`
+    based on Sobel‑gradient difference.
+    
+    Args:
+        new_frame: torch.Tensor of shape (C,H,W) or (H,W), values [0,255].
+        memory_frames: list of torch.Tensor, same shape as new_frame.
+        tau_grad: threshold on mean gradient‑diff to consider “novel”.
+    
+    Returns:
+        True if memory is empty OR for every old frame, 
+        compute_grad_diff_metric(old, new_frame) >= tau_grad.
+    """
+    if not memory_frames:
+        return True
+    for old in memory_frames:
+        if compute_grad_diff_metric(old, new_frame) < tau_grad:
+            # too similar to this old frame
+            return False
+    return True
+
+
 def select_closest_cond_frames(frame_idx, cond_frame_outputs, max_cond_frame_num):
     """
     Select up to `max_cond_frame_num` conditioning frames from `cond_frame_outputs`
