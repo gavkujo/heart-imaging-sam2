@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Change path
-SOURCE_DIR="./ACDC/training"
+SOURCE_DIR="./ACDC/ACDC_training_slices"
 GT_DEST="./acdc_data/gt"
 IMG_DEST="./acdc_data/img"
 
