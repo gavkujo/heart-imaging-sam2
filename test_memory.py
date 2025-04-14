@@ -8,8 +8,8 @@ from medpy.metric.binary import dc, hd95
 from sam2_video_predictor import SAM2VideoPredictor
 
 # Paths
-IMG_PATH = "../acdc_data/img"
-GT_PATH = "../acdc_data/gt"
+IMG_PATH = "./acdc_data/img"
+GT_PATH = "./acdc_data/gt"
 
 # Model init
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
